@@ -3,7 +3,7 @@ new_line = '\n'
 def lambda_handler(event, context):
     try:
         # Check if the request contains exactly one query parameter named "i"
-        if len(event['queryStringParameters']) != 1 or 'i' not in event['queryStringParameters']:
+        if not event['queryStringParameters'] or len(event['queryStringParameters']) != 1 or 'i' not in event['queryStringParameters']:
             error_message = f"Invalid request.{new_line}The request should contain exactly one query parameter named 'i'.{new_line}I.e. '?i=15'{new_line}"
             return {
                 "statusCode": 400,

@@ -1,3 +1,7 @@
+# No need to keep zip files in repo
+*.zip
+
+
 # Local .terraform directories
 **/.terraform/*
 
