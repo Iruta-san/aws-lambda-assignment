@@ -11,6 +11,7 @@ resource "aws_api_gateway_rest_api" "lambda" {
 resource "aws_api_gateway_method" "lambda" {
   authorization = "NONE"
   http_method   = "GET"
+  api_key_required = true
   resource_id   = aws_api_gateway_rest_api.lambda.root_resource_id
   rest_api_id   = aws_api_gateway_rest_api.lambda.id
 }
@@ -76,3 +77,44 @@ resource "aws_api_gateway_stage" "lambda" {
   stage_name    = "increase"
   tags          = var.tags
 }
+
+# Add API Key to protect our lambda function
+resource "aws_api_gateway_api_key" "lambda_api_key" {
+  name = "LambdaApiKey"
+}
+
+resource "aws_api_gateway_usage_plan" "lambda_usage_plan" {
+  name        = "LambdaFuncUsagePlan"
+  description = "Define ratelimits and throttle settings to our function, so we won't waste resources if something goes bad"
+
+  quota_settings {
+    limit  = 1000     # 1000 requests per day is sure more than enough in our case
+    offset = 0     # Reset the quota every day
+    period = "DAY"
+  }
+  throttle_settings {
+    burst_limit = 5
+    rate_limit  = 2
+  }
+
+  api_stages {
+    api_id     = aws_api_gateway_rest_api.lambda.id
+    stage      = aws_api_gateway_stage.lambda.stage_name
+  }
+}
+
+# Assosiate our API key with the plan
+resource "aws_api_gateway_usage_plan_key" "lambda_usage_plan_key" {
+  key_id        = aws_api_gateway_api_key.lambda_api_key.id
+  key_type      = "API_KEY"
+  usage_plan_id = aws_api_gateway_usage_plan.lambda_usage_plan.id
+}
+
+# # Attach the plan ti API gateway
+# resource "aws_api_gateway_usage_plan_attachment" "lambda_usage_plan_attachment" {
+#   usage_plan_id = aws_api_gateway_usage_plan.lambda_usage_plan.id
+#   api_stages {
+#     api_id     = aws_api_gateway_rest_api.lambda.id
+#     stage      = aws_api_gateway_stage.lambda.stage_name
+#   }
+# }
