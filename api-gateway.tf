@@ -88,13 +88,13 @@ resource "aws_api_gateway_usage_plan" "lambda_usage_plan" {
   description = "Define ratelimits and throttle settings to our function, so we won't waste resources if something goes bad"
 
   quota_settings {
-    limit  = 1000     # 1000 requests per day is sure more than enough in our case
-    offset = 0     # Reset the quota every day
-    period = "DAY"
+    limit  = var.quota_limit     # By default 1000 requests per day is sure more than enough in our case
+    offset = var.quota_offset    # By default reset the quota every day
+    period = var.quota_period
   }
   throttle_settings {
-    burst_limit = 5
-    rate_limit  = 2
+    burst_limit = var.throttle_burst     # Default: 5
+    rate_limit  = var.throttle_ratelimit # Default: 2
   }
 
   api_stages {
@@ -109,12 +109,3 @@ resource "aws_api_gateway_usage_plan_key" "lambda_usage_plan_key" {
   key_type      = "API_KEY"
   usage_plan_id = aws_api_gateway_usage_plan.lambda_usage_plan.id
 }
-
-# # Attach the plan ti API gateway
-# resource "aws_api_gateway_usage_plan_attachment" "lambda_usage_plan_attachment" {
-#   usage_plan_id = aws_api_gateway_usage_plan.lambda_usage_plan.id
-#   api_stages {
-#     api_id     = aws_api_gateway_rest_api.lambda.id
-#     stage      = aws_api_gateway_stage.lambda.stage_name
-#   }
-# }
